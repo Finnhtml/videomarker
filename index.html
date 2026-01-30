@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <title>Marker Pro v4</title>
+    <style>
+        :root {
+            --bg: #000000;
+            --card: #1c1c1e;
+            --accent: #32d74b;
+            --text: #ffffff;
+        }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: var(--bg); color: var(--text); margin: 0; padding: 15px;
+            display: flex; flex-direction: column; align-items: center; height: 100vh; box-sizing: border-box;
+            overflow: hidden;
+        }
+        
+        .header { text-align: center; margin-bottom: 10px; width: 100%; position: relative; }
+        .settings-icon { position: absolute; right: 0; top: 0; font-size: 24px; cursor: pointer; padding: 10px; z-index: 10; opacity: 0.7; }
+        .rec-dot { color: #ff3b30; font-size: 14px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .rec-dot::before { content: "●"; animation: blink 1s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .timecode { font-family: monospace; font-size: clamp(38px, 11vw, 52px); font-weight: 300; letter-spacing: 2px; }
+
+        .button-grid { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; 
+            width: 100%; max-width: 400px; margin-top: 10px; margin-bottom: 20px;
+        }
+        .main-btn {
+            aspect-ratio: 1.2/1; border-radius: 28px; border: none;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 18px; color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); position: relative; transition: transform 0.1s;
+        }
+        .main-btn:active { transform: scale(0.92); }
+        .btn-label { position: absolute; bottom: 15px; font-size: 11px; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; }
+
+        .recent-markers {
+            width: 100%; max-width: 400px; background: var(--card);
+            border-radius: 22px; padding: 15px; box-sizing: border-box;
+            flex-grow: 1; overflow-y: auto; margin-bottom: 15px;
+        }
+        .list-title { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 1px; }
+        .marker-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 5px; border-bottom: 1px solid #2c2c2e;
+        }
+        .m-color-dot { width: 12px; height: 12px; border-radius: 4px; }
+        .m-info { flex: 1; }
+        .m-name { font-size: 16px; font-weight: 500; display: block; }
+        .m-time { font-family: monospace; font-size: 12px; color: #666; }
+        .m-actions { display: flex; gap: 10px; }
+        .m-btn { background: #2c2c2e; border: none; color: white; padding: 8px 12px; border-radius: 10px; font-size: 14px; }
+
+        .footer-tools { width: 100%; max-width: 400px; display: flex; gap: 12px; padding-bottom: 10px; }
+        .tool-btn { background: var(--card); border: none; color: white; padding: 16px; border-radius: 18px; flex: 1; font-weight: bold; font-size: 15px; }
+        .export-btn { background: var(--accent); color: black; }
+
+        #settings-modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+            z-index: 100; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-content { background: var(--card); padding: 25px; border-radius: 24px; width: 100%; max-width: 380px; box-sizing: border-box; }
+        input, select { background: #2c2c2e; border: none; padding: 12px; border-radius: 10px; color: white; width: 100%; box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
+
+        .Red { background: #ff453a; } .Blue { background: #0a84ff; } .Green { background: #32d74b; } 
+        .Yellow { background: #ffd60a; color: #000; } .Orange { background: #ff9f0a; } 
+        .Purple { background: #bf5af2; } .Pink { background: #ff375f; } .Cyan { background: #64d2ff; color: #000; }
+    </style>
+</head>
+<body>
+
+    <div id="settings-modal">
+        <div class="modal-content">
+            <h2 style="margin-top:0">Konfiguration</h2>
+            <div id="edit-fields"></div>
+            <button class="tool-btn export-btn" style="width:100%" onclick="closeSettings()">Speichern</button>
+        </div>
+    </div>
+
+    <div class="header">
+        <div class="settings-icon" onclick="openSettings()">⚙️</div>
+        <div class="rec-dot">Session Rec</div>
+        <div class="timecode" id="tc">00:00:00:00</div>
+    </div>
+
+    <div class="button-grid" id="main-grid"></div>
+
+    <div class="recent-markers">
+        <div class="list-title">Letzte 5 Marker</div>
+        <div id="marker-history"></div>
+    </div>
+
+    <div class="footer-tools">
+        <button class="tool-btn" onclick="undo()">Undo</button>
+        <button class="tool-btn export-btn" onclick="exportCSV()">Share / Export</button>
+        <button class="tool-btn" style="background:#444" onclick="clearList()">Reset</button>
+    </div>
+
+    <script>
+        let markers = JSON.parse(localStorage.getItem('sessionMarkers')) || [];
+        const fps = 25;
+        let btnConfigs = JSON.parse(localStorage.getItem('btnConfigs')) || [
+            { name: 'Reel', color: 'Red' }, { name: 'New Topic', color: 'Blue' },
+            { name: '7s Clip', color: 'Green' }, { name: 'Cut Out', color: 'Orange' }
+        ];
+
+        function updateTC() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            const f = String(Math.floor(now.getMilliseconds() / (1000/fps))).padStart(2, '0');
+            document.getElementById('tc').innerText = `${h}:${m}:${s}:${f}`;
+            requestAnimationFrame(updateTC);
+        }
+
+        function renderUI() {
+            const grid = document.getElementById('main-grid');
+            grid.innerHTML = btnConfigs.map(c => `
+                <button class="main-btn ${c.color}" onclick="addMarker('${c.name}', '${c.color}')">
+                    <span>${c.name}</span><span class="btn-label">Marker</span>
+                </button>
+            `).join('');
+            
+            const history = document.getElementById('marker-history');
+            const lastFive = markers.slice(-5).reverse();
+            history.innerHTML = lastFive.length ? lastFive.map((m, i) => {
+                const actualIndex = markers.length - 1 - i;
+                return `
+                <div class="marker-item">
+                    <div class="m-color-dot ${m.color}"></div>
+                    <div class="m-info"><span class="m-name">${m.name}</span><span class="m-time">${m.time}</span></div>
+                    <div class="m-actions">
+                        <button class="m-btn" onclick="editMarker(${actualIndex})">✎</button>
+                        <button class="m-btn" onclick="deleteMarker(${actualIndex})">✕</button>
+                    </div>
+                </div>`;
+            }).join('') : '<div style="text-align:center; padding:30px; color:#444">Bereit...</div>';
+            
+            localStorage.setItem('btnConfigs', JSON.stringify(btnConfigs));
+            localStorage.setItem('sessionMarkers', JSON.stringify(markers));
+        }
+
+        function addMarker(name, color) {
+            if (navigator.vibrate) navigator.vibrate(50);
+            markers.push({ name: name, color: color, time: document.getElementById('tc').innerText });
+            renderUI();
+        }
+
+        function editMarker(index) {
+            const newName = prompt("Marker Name bearbeiten:", markers[index].name);
+            if (newName !== null) { markers[index].name = newName; renderUI(); }
+        }
+
+        function deleteMarker(index) { markers.splice(index, 1); renderUI(); }
+
+        async function exportCSV() {
+            if(!markers.length) return alert("Keine Marker!");
+            let csv = "Name,Notes,Color,Marker Name,Description,Duration,Source Timecode\n";
+            markers.forEach(m => csv += `${m.name},,${m.color},${m.name},,00:00:00:00,${m.time}\n`);
+            
+            const d = new Date();
+            const dateStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+            const firstTime = markers[0].time.substring(0, 5).replace(/:/g, "-");
+            const lastTime = markers[markers.length - 1].time.substring(0, 5).replace(/:/g, "-");
+            const fileName = `Markers_${dateStr}_${firstTime}_bis_${lastTime}.csv`;
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const file = new File([blob], fileName, { type: 'text/csv' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try { await navigator.share({ files: [file], title: 'DaVinci Markers' }); } 
+                catch (err) { downloadFallback(blob, fileName); }
+            } else { downloadFallback(blob, fileName); }
+        }
+
+        function downloadFallback(blob, fileName) {
+            const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: fileName });
+            a.click();
+        }
+
+        function openSettings() {
+            document.getElementById('edit-fields').innerHTML = btnConfigs.map((c, i) => `
+                <input type="text" value="${c.name}" onchange="btnConfigs[${i}].name=this.value">
+                <select onchange="btnConfigs[${i}].color=this.value">
+                    ${['Red','Blue','Green','Yellow','Cyan','Pink','Purple','Orange'].map(col => `<option value="${col}" ${c.color===col?'selected':''}>${col}</option>`).join('')}
+                </select>`).join('');
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+
+        function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; renderUI(); }
+        function undo() { if(markers.length > 0) { markers.pop(); renderUI(); } }
+        function clearList() { if(confirm("Alles löschen?")) { markers = []; renderUI(); } }
+
+        updateTC();
+        renderUI();
+    </script>
+</body>
+</html>
