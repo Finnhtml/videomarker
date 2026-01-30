@@ -6,76 +6,88 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
-    <title>Marker Pro Mobile</title>
+    <title>Marker Pro Mobile Fix</title>
     <style>
         :root {
             --bg: #000000;
             --card: #1c1c1e;
             --accent: #32d74b;
             --text: #ffffff;
-            --safe-top: env(safe-area-inset-top, 20px);
-            --safe-bottom: env(safe-area-inset-bottom, 20px);
+            --safe-top: env(safe-area-inset-top, 10px);
+            --safe-bottom: env(safe-area-inset-bottom, 10px);
         }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        
+        html, body { 
+            height: 100%; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            background-color: var(--bg);
+        }
+
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: var(--bg); color: var(--text); margin: 0; 
+            color: var(--text);
             padding: var(--safe-top) 15px var(--safe-bottom) 15px;
-            display: flex; flex-direction: column; height: 100vh;
-            overflow: hidden;
+            display: flex; 
+            flex-direction: column;
         }
         
-        .header { display: flex; flex-direction: column; align-items: center; margin-bottom: 15px; position: relative; }
-        .settings-icon { position: absolute; right: 0; top: 0; font-size: 26px; padding: 10px; z-index: 10; opacity: 0.8; }
-        .rec-dot { color: #ff3b30; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+        .header { flex-shrink: 0; text-align: center; margin-bottom: 10px; position: relative; padding-top: 5px; }
+        .settings-icon { position: absolute; right: 0; top: 0; font-size: 24px; padding: 10px; opacity: 0.7; }
+        .rec-dot { color: #ff3b30; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .rec-dot::before { content: ""; width: 8px; height: 8px; background: #ff3b30; border-radius: 50%; animation: blink 1s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-        .timecode { font-family: 'Courier New', monospace; font-size: 52px; font-weight: bold; letter-spacing: -1px; color: #fff; }
+        .timecode { font-family: monospace; font-size: clamp(34px, 10vw, 48px); font-weight: bold; letter-spacing: 1px; }
 
         .button-grid { 
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; 
+            flex-shrink: 0;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
             width: 100%; margin-bottom: 15px;
         }
         .main-btn {
-            height: 90px; border-radius: 22px; border: none;
+            height: clamp(70px, 15vh, 90px); border-radius: 20px; border: none;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 19px; color: white;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.4); transition: transform 0.05s, opacity 0.1s;
+            font-weight: 700; font-size: 18px; color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4); transition: transform 0.05s;
         }
-        .main-btn:active { transform: scale(0.95); opacity: 0.8; }
-        .btn-label { font-size: 10px; opacity: 0.6; margin-top: 4px; text-transform: uppercase; }
+        .main-btn:active { transform: scale(0.95); }
+        .btn-label { font-size: 10px; opacity: 0.6; margin-top: 3px; text-transform: uppercase; }
 
         .recent-markers {
-            background: var(--card); border-radius: 24px; padding: 15px;
-            flex-grow: 1; overflow-y: auto; margin-bottom: 15px;
+            flex-grow: 1; /* Nimmt den restlichen Platz ein */
+            background: var(--card); border-radius: 20px; padding: 12px;
+            overflow-y: auto; /* Scrollbar nur hier, falls die Liste lang wird */
+            margin-bottom: 15px;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
-        .list-title { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 10px; font-weight: 600; }
+        .list-title { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 8px; }
         .marker-item {
-            display: flex; align-items: center; gap: 12px;
-            padding: 12px 0; border-bottom: 1px solid #2c2c2e;
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 0; border-bottom: 1px solid #2c2c2e;
         }
-        .m-color-dot { width: 14px; height: 14px; border-radius: 5px; }
-        .m-info { flex: 1; }
-        .m-name { font-size: 16px; font-weight: 600; }
-        .m-time { font-family: monospace; font-size: 13px; color: #777; display: block; }
+        .m-color-dot { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
+        .m-info { flex: 1; min-width: 0; }
+        .m-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+        .m-time { font-family: monospace; font-size: 12px; color: #777; }
         .m-actions { display: flex; gap: 8px; }
-        .m-btn { background: #3a3a3c; border: none; color: white; padding: 8px 12px; border-radius: 10px; font-size: 16px; }
+        .m-btn { background: #3a3a3c; border: none; color: white; padding: 6px 10px; border-radius: 8px; font-size: 14px; }
 
-        .footer-tools { display: flex; gap: 10px; margin-bottom: 5px; }
-        .tool-btn { background: var(--card); border: none; color: white; padding: 18px; border-radius: 20px; flex: 1; font-weight: 800; font-size: 15px; }
-        .export-btn { background: var(--accent); color: black; box-shadow: 0 4px 12px rgba(50, 215, 75, 0.3); }
+        .footer-tools { 
+            flex-shrink: 0; /* Verhindert, dass die Buttons weggedrückt werden */
+            display: flex; gap: 10px; padding-bottom: 5px; 
+        }
+        .tool-btn { background: var(--card); border: none; color: white; padding: 15px; border-radius: 18px; flex: 1; font-weight: 700; font-size: 14px; }
+        .export-btn { background: var(--accent); color: black; }
 
-        /* Modal Settings */
         #settings-modal {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
             z-index: 100; align-items: center; justify-content: center; padding: 20px;
         }
-        .modal-content { background: var(--card); padding: 25px; border-radius: 30px; width: 100%; max-width: 400px; }
-        .modal-content h2 { margin: 0 0 20px 0; font-size: 24px; }
-        input, select { background: #2c2c2e; border: none; padding: 15px; border-radius: 14px; color: white; width: 100%; font-size: 17px; margin-bottom: 12px; }
+        .modal-content { background: var(--card); padding: 20px; border-radius: 25px; width: 100%; max-width: 400px; }
+        input, select { background: #2c2c2e; border: none; padding: 12px; border-radius: 10px; color: white; width: 100%; font-size: 16px; margin-bottom: 10px; }
 
-        /* DaVinci Farben */
         .Red { background: #ff453a; } .Blue { background: #0a84ff; } .Green { background: #32d74b; } 
         .Yellow { background: #ffd60a; color: #000; } .Orange { background: #ff9f0a; } 
         .Purple { background: #bf5af2; } .Pink { background: #ff375f; } .Cyan { background: #64d2ff; color: #000; }
@@ -85,9 +97,9 @@
 
     <div id="settings-modal">
         <div class="modal-content">
-            <h2>Einstellungen</h2>
+            <h2 style="margin-top:0">Einstellungen</h2>
             <div id="edit-fields"></div>
-            <button class="tool-btn export-btn" style="width:100%" onclick="closeSettings()">Speichern</button>
+            <button class="tool-btn export-btn" style="width:100%" onclick="closeSettings()">Fertig</button>
         </div>
     </div>
 
@@ -100,7 +112,7 @@
     <div class="button-grid" id="main-grid"></div>
 
     <div class="recent-markers">
-        <div class="list-title">Letzte Marker</div>
+        <div class="list-title">Historie</div>
         <div id="marker-history"></div>
     </div>
 
@@ -138,7 +150,7 @@
             `).join('');
             
             const history = document.getElementById('marker-history');
-            const lastMarkers = markers.slice(-10).reverse();
+            const lastMarkers = markers.slice(-15).reverse();
             history.innerHTML = lastMarkers.length ? lastMarkers.map((m, i) => {
                 const actualIndex = markers.length - 1 - i;
                 return `
@@ -150,14 +162,14 @@
                         <button class="m-btn" onclick="deleteMarker(${actualIndex})">✕</button>
                     </div>
                 </div>`;
-            }).join('') : '<div style="text-align:center; padding:30px; color:#555">Bereit zum Markieren...</div>';
+            }).join('') : '<div style="text-align:center; padding:20px; color:#555">Bereit...</div>';
             
             localStorage.setItem('btnConfigs', JSON.stringify(btnConfigs));
             localStorage.setItem('sessionMarkers', JSON.stringify(markers));
         }
 
         function addMarker(name, color) {
-            if (navigator.vibrate) navigator.vibrate(60);
+            if (navigator.vibrate) navigator.vibrate(50);
             markers.push({ name, color, time: document.getElementById('tc').innerText });
             renderUI();
         }
