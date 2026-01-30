@@ -3,131 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
-    <title>Marker Pro Mobile Fix</title>
+    <title>Marker Pro Monitor</title>
     <style>
-        :root {
-            --bg: #000000;
-            --card: #1c1c1e;
-            --accent: #32d74b;
-            --text: #ffffff;
-            --safe-top: env(safe-area-inset-top, 10px);
-            --safe-bottom: env(safe-area-inset-bottom, 10px);
-        }
+        :root { --bg: #000; --card: rgba(28, 28, 30, 0.8); --accent: #32d74b; --text: #fff; }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body, html { height: 100%; margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; overflow: hidden; }
         
-        html, body { 
-            height: 100%; 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
-            background-color: var(--bg);
+        /* Kamera Hintergrund */
+        #video-bg {
+            position: fixed; inset: 0; width: 100%; height: 100%; 
+            object-fit: cover; z-index: -1; display: none; background: #222;
         }
 
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            color: var(--text);
-            padding: var(--safe-top) 15px var(--safe-bottom) 15px;
-            display: flex; 
-            flex-direction: column;
+        .container { 
+            display: flex; flex-direction: column; height: 100%; 
+            padding: env(safe-area-inset-top) 15px env(safe-area-inset-bottom);
         }
-        
-        .header { flex-shrink: 0; text-align: center; margin-bottom: 10px; position: relative; padding-top: 5px; }
-        .settings-icon { position: absolute; right: 0; top: 0; font-size: 24px; padding: 10px; opacity: 0.7; }
-        .rec-dot { color: #ff3b30; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .rec-dot::before { content: ""; width: 8px; height: 8px; background: #ff3b30; border-radius: 50%; animation: blink 1s infinite; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-        .timecode { font-family: monospace; font-size: clamp(34px, 10vw, 48px); font-weight: bold; letter-spacing: 1px; }
 
-        .button-grid { 
-            flex-shrink: 0;
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
-            width: 100%; margin-bottom: 15px;
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+        .timecode { font-family: monospace; font-size: 32px; font-weight: bold; text-shadow: 0 2px 4px #000; }
+        
+        /* Kompakter Monitor-Modus Style */
+        body.monitor-on .button-grid { 
+            grid-template-columns: repeat(4, 1fr); 
+            position: fixed; bottom: 80px; left: 10px; right: 10px; gap: 5px; 
         }
+        body.monitor-on .main-btn { height: 60px; font-size: 12px; border-radius: 12px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); }
+        body.monitor-on .recent-markers { display: none; }
+        body.monitor-on .timecode { font-size: 24px; position: fixed; top: 10px; left: 15px; }
+
+        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
         .main-btn {
-            height: clamp(70px, 15vh, 90px); border-radius: 20px; border: none;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 18px; color: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4); transition: transform 0.05s;
+            height: 80px; border-radius: 20px; border: none; color: white;
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
         }
-        .main-btn:active { transform: scale(0.95); }
-        .btn-label { font-size: 10px; opacity: 0.6; margin-top: 3px; text-transform: uppercase; }
 
-        .recent-markers {
-            flex-grow: 1; /* Nimmt den restlichen Platz ein */
-            background: var(--card); border-radius: 20px; padding: 12px;
-            overflow-y: auto; /* Scrollbar nur hier, falls die Liste lang wird */
-            margin-bottom: 15px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-        }
-        .list-title { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 8px; }
-        .marker-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 10px 0; border-bottom: 1px solid #2c2c2e;
-        }
-        .m-color-dot { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
-        .m-info { flex: 1; min-width: 0; }
-        .m-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
-        .m-time { font-family: monospace; font-size: 12px; color: #777; }
-        .m-actions { display: flex; gap: 8px; }
-        .m-btn { background: #3a3a3c; border: none; color: white; padding: 6px 10px; border-radius: 8px; font-size: 14px; }
+        .recent-markers { flex-grow: 1; background: var(--card); border-radius: 20px; padding: 12px; overflow-y: auto; margin-bottom: 10px; }
+        .marker-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333; font-size: 14px; }
 
-        .footer-tools { 
-            flex-shrink: 0; /* Verhindert, dass die Buttons weggedrückt werden */
-            display: flex; gap: 10px; padding-bottom: 5px; 
-        }
-        .tool-btn { background: var(--card); border: none; color: white; padding: 15px; border-radius: 18px; flex: 1; font-weight: 700; font-size: 14px; }
-        .export-btn { background: var(--accent); color: black; }
-
-        #settings-modal {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
-            z-index: 100; align-items: center; justify-content: center; padding: 20px;
-        }
-        .modal-content { background: var(--card); padding: 20px; border-radius: 25px; width: 100%; max-width: 400px; }
-        input, select { background: #2c2c2e; border: none; padding: 12px; border-radius: 10px; color: white; width: 100%; font-size: 16px; margin-bottom: 10px; }
-
-        .Red { background: #ff453a; } .Blue { background: #0a84ff; } .Green { background: #32d74b; } 
-        .Yellow { background: #ffd60a; color: #000; } .Orange { background: #ff9f0a; } 
-        .Purple { background: #bf5af2; } .Pink { background: #ff375f; } .Cyan { background: #64d2ff; color: #000; }
+        .footer { display: flex; gap: 8px; padding-bottom: 10px; }
+        .tool-btn { background: var(--card); border: none; color: white; padding: 12px; border-radius: 15px; flex: 1; font-weight: bold; }
+        .monitor-btn { background: #5856d6; } /* Lila für Monitor Modus */
+        
+        .Red { background: #ff453a; } .Blue { background: #0a84ff; } .Green { background: #32d74b; } .Orange { background: #ff9f0a; }
     </style>
 </head>
 <body>
 
-    <div id="settings-modal">
-        <div class="modal-content">
-            <h2 style="margin-top:0">Einstellungen</h2>
-            <div id="edit-fields"></div>
-            <button class="tool-btn export-btn" style="width:100%" onclick="closeSettings()">Fertig</button>
+    <video id="video-bg" autoplay playsinline></video>
+
+    <div class="container">
+        <div class="header">
+            <div class="timecode" id="tc">00:00:00:00</div>
+            <div onclick="openSettings()" style="font-size: 24px;">⚙️</div>
         </div>
-    </div>
 
-    <div class="header">
-        <div class="settings-icon" onclick="openSettings()">⚙️</div>
-        <div class="rec-dot">Live Session</div>
-        <div class="timecode" id="tc">00:00:00:00</div>
-    </div>
+        <div class="button-grid" id="main-grid"></div>
 
-    <div class="button-grid" id="main-grid"></div>
+        <div class="recent-markers" id="history-box">
+            <div id="marker-history"></div>
+        </div>
 
-    <div class="recent-markers">
-        <div class="list-title">Historie</div>
-        <div id="marker-history"></div>
-    </div>
-
-    <div class="footer-tools">
-        <button class="tool-btn" onclick="undo()">Undo</button>
-        <button class="tool-btn export-btn" onclick="exportCSV()">Export</button>
-        <button class="tool-btn" onclick="clearList()" style="background:#333; flex: 0.6;">Reset</button>
+        <div class="footer">
+            <button class="tool-btn" onclick="undo()">Undo</button>
+            <button class="tool-btn monitor-btn" id="mon-toggle" onclick="toggleMonitor()">Monitor An</button>
+            <button class="tool-btn" style="background: #32d74b; color: #000;" onclick="exportCSV()">Export</button>
+        </div>
     </div>
 
     <script>
         let markers = JSON.parse(localStorage.getItem('sessionMarkers')) || [];
-        const fps = 25;
         let btnConfigs = JSON.parse(localStorage.getItem('btnConfigs')) || [
             { name: 'Reel', color: 'Red' }, { name: 'Thema', color: 'Blue' },
-            { name: 'Guter Take', color: 'Green' }, { name: 'Outtake', color: 'Orange' }
+            { name: 'Highlight', color: 'Green' }, { name: 'Cut', color: 'Orange' }
         ];
 
         function updateTC() {
@@ -135,88 +83,56 @@
             const h = String(now.getHours()).padStart(2, '0');
             const m = String(now.getMinutes()).padStart(2, '0');
             const s = String(now.getSeconds()).padStart(2, '0');
-            const f = String(Math.floor(now.getMilliseconds() / (1000/fps))).padStart(2, '0');
+            const f = String(Math.floor(now.getMilliseconds() / 40)).padStart(2, '0');
             document.getElementById('tc').innerText = `${h}:${m}:${s}:${f}`;
             requestAnimationFrame(updateTC);
         }
 
+        async function toggleMonitor() {
+            const video = document.getElementById('video-bg');
+            const btn = document.getElementById('mon-toggle');
+            
+            if (document.body.classList.contains('monitor-on')) {
+                document.body.classList.remove('monitor-on');
+                video.style.display = 'none';
+                btn.innerText = "Monitor An";
+                if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+            } else {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    document.body.classList.add('monitor-on');
+                    btn.innerText = "Monitor Aus";
+                } catch (e) {
+                    alert("Kamera nicht gefunden. USB-C Verbindung prüfen!");
+                }
+            }
+        }
+
         function renderUI() {
             const grid = document.getElementById('main-grid');
-            grid.innerHTML = btnConfigs.map(c => `
-                <button class="main-btn ${c.color}" onclick="addMarker('${c.name}', '${c.color}')">
-                    ${c.name}
-                    <span class="btn-label">Marker</span>
-                </button>
-            `).join('');
-            
+            grid.innerHTML = btnConfigs.map(c => `<button class="main-btn ${c.color}" onclick="addMarker('${c.name}', '${c.color}')">${c.name}</button>`).join('');
             const history = document.getElementById('marker-history');
-            const lastMarkers = markers.slice(-15).reverse();
-            history.innerHTML = lastMarkers.length ? lastMarkers.map((m, i) => {
-                const actualIndex = markers.length - 1 - i;
-                return `
-                <div class="marker-item">
-                    <div class="m-color-dot ${m.color}"></div>
-                    <div class="m-info"><span class="m-name">${m.name}</span><span class="m-time">${m.time}</span></div>
-                    <div class="m-actions">
-                        <button class="m-btn" onclick="editMarker(${actualIndex})">✎</button>
-                        <button class="m-btn" onclick="deleteMarker(${actualIndex})">✕</button>
-                    </div>
-                </div>`;
-            }).join('') : '<div style="text-align:center; padding:20px; color:#555">Bereit...</div>';
-            
-            localStorage.setItem('btnConfigs', JSON.stringify(btnConfigs));
+            history.innerHTML = markers.slice(-5).reverse().map(m => `<div class="marker-item"><span>${m.name}</span><span style="color:#888">${m.time}</span></div>`).join('');
             localStorage.setItem('sessionMarkers', JSON.stringify(markers));
         }
 
         function addMarker(name, color) {
-            if (navigator.vibrate) navigator.vibrate(50);
+            if (navigator.vibrate) navigator.vibrate(40);
             markers.push({ name, color, time: document.getElementById('tc').innerText });
             renderUI();
         }
 
-        function editMarker(index) {
-            const newName = prompt("Name ändern:", markers[index].name);
-            if (newName) { markers[index].name = newName; renderUI(); }
-        }
+        function undo() { markers.pop(); renderUI(); }
 
-        function deleteMarker(index) { markers.splice(index, 1); renderUI(); }
-
-        async function exportCSV() {
-            if(!markers.length) return alert("Keine Marker!");
+        function exportCSV() {
             let csv = "Name,Notes,Color,Marker Name,Description,Duration,Source Timecode\n";
             markers.forEach(m => csv += `${m.name},,${m.color},${m.name},,00:00:00:00,${m.time}\n`);
-            
-            const d = new Date();
-            const dateStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
-            const firstT = markers[0].time.substring(0, 5).replace(/:/g, "-");
-            const lastT = markers[markers.length - 1].time.substring(0, 5).replace(/:/g, "-");
-            const fileName = `Markers_${dateStr}_${firstT}_bis_${lastT}.csv`;
-            
-            const file = new File([new Blob([csv], { type: 'text/csv' })], fileName, { type: 'text/csv' });
-
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                try { await navigator.share({ files: [file], title: 'Marker Export' }); } 
-                catch (err) { downloadFallback(file, fileName); }
-            } else { downloadFallback(file, fileName); }
-        }
-
-        function downloadFallback(blob, fileName) {
-            const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: fileName });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'Markers.csv' });
             a.click();
         }
-
-        function openSettings() {
-            document.getElementById('edit-fields').innerHTML = btnConfigs.map((c, i) => `
-                <input type="text" value="${c.name}" onchange="btnConfigs[${i}].name=this.value">
-                <select onchange="btnConfigs[${i}].color=this.value">
-                    ${['Red','Blue','Green','Yellow','Cyan','Pink','Purple','Orange'].map(col => `<option value="${col}" ${c.color===col?'selected':''}>${col}</option>`).join('')}
-                </select>`).join('');
-            document.getElementById('settings-modal').style.display = 'flex';
-        }
-
-        function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; renderUI(); }
-        function undo() { if(markers.length > 0) { markers.pop(); renderUI(); } }
-        function clearList() { if(confirm("Alle löschen?")) { markers = []; renderUI(); } }
 
         updateTC();
         renderUI();
