@@ -2,73 +2,80 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
-    <title>Marker Pro v4</title>
+    <title>Marker Pro Mobile</title>
     <style>
         :root {
             --bg: #000000;
             --card: #1c1c1e;
             --accent: #32d74b;
             --text: #ffffff;
+            --safe-top: env(safe-area-inset-top, 20px);
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
         }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: var(--bg); color: var(--text); margin: 0; padding: 15px;
-            display: flex; flex-direction: column; align-items: center; height: 100vh; box-sizing: border-box;
+            background-color: var(--bg); color: var(--text); margin: 0; 
+            padding: var(--safe-top) 15px var(--safe-bottom) 15px;
+            display: flex; flex-direction: column; height: 100vh;
             overflow: hidden;
         }
         
-        .header { text-align: center; margin-bottom: 10px; width: 100%; position: relative; }
-        .settings-icon { position: absolute; right: 0; top: 0; font-size: 24px; cursor: pointer; padding: 10px; z-index: 10; opacity: 0.7; }
-        .rec-dot { color: #ff3b30; font-size: 14px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .rec-dot::before { content: "●"; animation: blink 1s infinite; }
+        .header { display: flex; flex-direction: column; align-items: center; margin-bottom: 15px; position: relative; }
+        .settings-icon { position: absolute; right: 0; top: 0; font-size: 26px; padding: 10px; z-index: 10; opacity: 0.8; }
+        .rec-dot { color: #ff3b30; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+        .rec-dot::before { content: ""; width: 8px; height: 8px; background: #ff3b30; border-radius: 50%; animation: blink 1s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-        .timecode { font-family: monospace; font-size: clamp(38px, 11vw, 52px); font-weight: 300; letter-spacing: 2px; }
+        .timecode { font-family: 'Courier New', monospace; font-size: 52px; font-weight: bold; letter-spacing: -1px; color: #fff; }
 
         .button-grid { 
-            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; 
-            width: 100%; max-width: 400px; margin-top: 10px; margin-bottom: 20px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; 
+            width: 100%; margin-bottom: 15px;
         }
         .main-btn {
-            aspect-ratio: 1.2/1; border-radius: 28px; border: none;
+            height: 90px; border-radius: 22px; border: none;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-weight: 600; font-size: 18px; color: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); position: relative; transition: transform 0.1s;
+            font-weight: 700; font-size: 19px; color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4); transition: transform 0.05s, opacity 0.1s;
         }
-        .main-btn:active { transform: scale(0.92); }
-        .btn-label { position: absolute; bottom: 15px; font-size: 11px; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; }
+        .main-btn:active { transform: scale(0.95); opacity: 0.8; }
+        .btn-label { font-size: 10px; opacity: 0.6; margin-top: 4px; text-transform: uppercase; }
 
         .recent-markers {
-            width: 100%; max-width: 400px; background: var(--card);
-            border-radius: 22px; padding: 15px; box-sizing: border-box;
+            background: var(--card); border-radius: 24px; padding: 15px;
             flex-grow: 1; overflow-y: auto; margin-bottom: 15px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
-        .list-title { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 1px; }
+        .list-title { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 10px; font-weight: 600; }
         .marker-item {
             display: flex; align-items: center; gap: 12px;
-            padding: 12px 5px; border-bottom: 1px solid #2c2c2e;
+            padding: 12px 0; border-bottom: 1px solid #2c2c2e;
         }
-        .m-color-dot { width: 12px; height: 12px; border-radius: 4px; }
+        .m-color-dot { width: 14px; height: 14px; border-radius: 5px; }
         .m-info { flex: 1; }
-        .m-name { font-size: 16px; font-weight: 500; display: block; }
-        .m-time { font-family: monospace; font-size: 12px; color: #666; }
-        .m-actions { display: flex; gap: 10px; }
-        .m-btn { background: #2c2c2e; border: none; color: white; padding: 8px 12px; border-radius: 10px; font-size: 14px; }
+        .m-name { font-size: 16px; font-weight: 600; }
+        .m-time { font-family: monospace; font-size: 13px; color: #777; display: block; }
+        .m-actions { display: flex; gap: 8px; }
+        .m-btn { background: #3a3a3c; border: none; color: white; padding: 8px 12px; border-radius: 10px; font-size: 16px; }
 
-        .footer-tools { width: 100%; max-width: 400px; display: flex; gap: 12px; padding-bottom: 10px; }
-        .tool-btn { background: var(--card); border: none; color: white; padding: 16px; border-radius: 18px; flex: 1; font-weight: bold; font-size: 15px; }
-        .export-btn { background: var(--accent); color: black; }
+        .footer-tools { display: flex; gap: 10px; margin-bottom: 5px; }
+        .tool-btn { background: var(--card); border: none; color: white; padding: 18px; border-radius: 20px; flex: 1; font-weight: 800; font-size: 15px; }
+        .export-btn { background: var(--accent); color: black; box-shadow: 0 4px 12px rgba(50, 215, 75, 0.3); }
 
+        /* Modal Settings */
         #settings-modal {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
             z-index: 100; align-items: center; justify-content: center; padding: 20px;
         }
-        .modal-content { background: var(--card); padding: 25px; border-radius: 24px; width: 100%; max-width: 380px; box-sizing: border-box; }
-        input, select { background: #2c2c2e; border: none; padding: 12px; border-radius: 10px; color: white; width: 100%; box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
+        .modal-content { background: var(--card); padding: 25px; border-radius: 30px; width: 100%; max-width: 400px; }
+        .modal-content h2 { margin: 0 0 20px 0; font-size: 24px; }
+        input, select { background: #2c2c2e; border: none; padding: 15px; border-radius: 14px; color: white; width: 100%; font-size: 17px; margin-bottom: 12px; }
 
+        /* DaVinci Farben */
         .Red { background: #ff453a; } .Blue { background: #0a84ff; } .Green { background: #32d74b; } 
         .Yellow { background: #ffd60a; color: #000; } .Orange { background: #ff9f0a; } 
         .Purple { background: #bf5af2; } .Pink { background: #ff375f; } .Cyan { background: #64d2ff; color: #000; }
@@ -78,7 +85,7 @@
 
     <div id="settings-modal">
         <div class="modal-content">
-            <h2 style="margin-top:0">Konfiguration</h2>
+            <h2>Einstellungen</h2>
             <div id="edit-fields"></div>
             <button class="tool-btn export-btn" style="width:100%" onclick="closeSettings()">Speichern</button>
         </div>
@@ -86,29 +93,29 @@
 
     <div class="header">
         <div class="settings-icon" onclick="openSettings()">⚙️</div>
-        <div class="rec-dot">Session Rec</div>
+        <div class="rec-dot">Live Session</div>
         <div class="timecode" id="tc">00:00:00:00</div>
     </div>
 
     <div class="button-grid" id="main-grid"></div>
 
     <div class="recent-markers">
-        <div class="list-title">Letzte 5 Marker</div>
+        <div class="list-title">Letzte Marker</div>
         <div id="marker-history"></div>
     </div>
 
     <div class="footer-tools">
         <button class="tool-btn" onclick="undo()">Undo</button>
-        <button class="tool-btn export-btn" onclick="exportCSV()">Share / Export</button>
-        <button class="tool-btn" style="background:#444" onclick="clearList()">Reset</button>
+        <button class="tool-btn export-btn" onclick="exportCSV()">Export</button>
+        <button class="tool-btn" onclick="clearList()" style="background:#333; flex: 0.6;">Reset</button>
     </div>
 
     <script>
         let markers = JSON.parse(localStorage.getItem('sessionMarkers')) || [];
         const fps = 25;
         let btnConfigs = JSON.parse(localStorage.getItem('btnConfigs')) || [
-            { name: 'Reel', color: 'Red' }, { name: 'New Topic', color: 'Blue' },
-            { name: '7s Clip', color: 'Green' }, { name: 'Cut Out', color: 'Orange' }
+            { name: 'Reel', color: 'Red' }, { name: 'Thema', color: 'Blue' },
+            { name: 'Guter Take', color: 'Green' }, { name: 'Outtake', color: 'Orange' }
         ];
 
         function updateTC() {
@@ -125,13 +132,14 @@
             const grid = document.getElementById('main-grid');
             grid.innerHTML = btnConfigs.map(c => `
                 <button class="main-btn ${c.color}" onclick="addMarker('${c.name}', '${c.color}')">
-                    <span>${c.name}</span><span class="btn-label">Marker</span>
+                    ${c.name}
+                    <span class="btn-label">Marker</span>
                 </button>
             `).join('');
             
             const history = document.getElementById('marker-history');
-            const lastFive = markers.slice(-5).reverse();
-            history.innerHTML = lastFive.length ? lastFive.map((m, i) => {
+            const lastMarkers = markers.slice(-10).reverse();
+            history.innerHTML = lastMarkers.length ? lastMarkers.map((m, i) => {
                 const actualIndex = markers.length - 1 - i;
                 return `
                 <div class="marker-item">
@@ -142,21 +150,21 @@
                         <button class="m-btn" onclick="deleteMarker(${actualIndex})">✕</button>
                     </div>
                 </div>`;
-            }).join('') : '<div style="text-align:center; padding:30px; color:#444">Bereit...</div>';
+            }).join('') : '<div style="text-align:center; padding:30px; color:#555">Bereit zum Markieren...</div>';
             
             localStorage.setItem('btnConfigs', JSON.stringify(btnConfigs));
             localStorage.setItem('sessionMarkers', JSON.stringify(markers));
         }
 
         function addMarker(name, color) {
-            if (navigator.vibrate) navigator.vibrate(50);
-            markers.push({ name: name, color: color, time: document.getElementById('tc').innerText });
+            if (navigator.vibrate) navigator.vibrate(60);
+            markers.push({ name, color, time: document.getElementById('tc').innerText });
             renderUI();
         }
 
         function editMarker(index) {
-            const newName = prompt("Marker Name bearbeiten:", markers[index].name);
-            if (newName !== null) { markers[index].name = newName; renderUI(); }
+            const newName = prompt("Name ändern:", markers[index].name);
+            if (newName) { markers[index].name = newName; renderUI(); }
         }
 
         function deleteMarker(index) { markers.splice(index, 1); renderUI(); }
@@ -168,17 +176,16 @@
             
             const d = new Date();
             const dateStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
-            const firstTime = markers[0].time.substring(0, 5).replace(/:/g, "-");
-            const lastTime = markers[markers.length - 1].time.substring(0, 5).replace(/:/g, "-");
-            const fileName = `Markers_${dateStr}_${firstTime}_bis_${lastTime}.csv`;
+            const firstT = markers[0].time.substring(0, 5).replace(/:/g, "-");
+            const lastT = markers[markers.length - 1].time.substring(0, 5).replace(/:/g, "-");
+            const fileName = `Markers_${dateStr}_${firstT}_bis_${lastT}.csv`;
             
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const file = new File([blob], fileName, { type: 'text/csv' });
+            const file = new File([new Blob([csv], { type: 'text/csv' })], fileName, { type: 'text/csv' });
 
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                try { await navigator.share({ files: [file], title: 'DaVinci Markers' }); } 
-                catch (err) { downloadFallback(blob, fileName); }
-            } else { downloadFallback(blob, fileName); }
+                try { await navigator.share({ files: [file], title: 'Marker Export' }); } 
+                catch (err) { downloadFallback(file, fileName); }
+            } else { downloadFallback(file, fileName); }
         }
 
         function downloadFallback(blob, fileName) {
@@ -197,7 +204,7 @@
 
         function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; renderUI(); }
         function undo() { if(markers.length > 0) { markers.pop(); renderUI(); } }
-        function clearList() { if(confirm("Alles löschen?")) { markers = []; renderUI(); } }
+        function clearList() { if(confirm("Alle löschen?")) { markers = []; renderUI(); } }
 
         updateTC();
         renderUI();
